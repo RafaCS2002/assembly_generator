@@ -1577,9 +1577,12 @@ add_int_numbers:
     pop r22
     pop r21
     pop r20
+
     call sub_numbers
 
+    pop r24
     call set_sign_for_zero
+
     ret
     
     eq_signs_add_int:

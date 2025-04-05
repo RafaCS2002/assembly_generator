@@ -1202,6 +1202,14 @@ sign_inverter:
     rol r24
     andi r24, 0b00000011
     ret
+mem_to_primary:
+    or r24, r25
+    ret
+
+mem_to_secondary:
+    lsl r25
+    or r24, r25
+    ret
 ; OPERATIONS -----------------------------------------------------------------------------
 add_numbers:
 
@@ -1833,9 +1841,12 @@ add_int_numbers:
     pop r22
     pop r21
     pop r20
+
     call sub_numbers
 
+    pop r24
     call set_sign_for_zero
+
     ret
     
     eq_signs_add_int:
@@ -2074,10 +2085,9 @@ setup:
     call send_char_call_no_Correction
 
 main:
-    
-clr r24
-; --- INSTRUÇÃO 13 ---
-
+    ; -----------------------------------------------
+    clr r24
+    ; ((2 4 -) MEM) = -2
     ; Load primary number
     ldi r19, 0
     ldi r18, 2
@@ -2087,100 +2097,99 @@ clr r24
 
     ; Load secondary number
     ldi r23, 0
-    ldi r22, 2
+    ldi r22, 4
     ldi r21, 0
     ldi r20, 0
     ori r24, 0b00000000
 
-    ; sign debug
-    mov r29,r24
-    call send_full_byte_binary
-    clr r29
-    ldi r30, '-'
-    call send_char_call_no_Correction
-    clr r30
-
-    call div_real_int_numbers
-
-
-    ; sign debug
-    mov r29,r24
-    call send_full_byte_binary
-    clr r29
-    ldi r30, '-'
-    call send_char_call_no_Correction
-    clr r30
-
-; --- INSTRUÇÃO 14 ---
-
-
-    ; Load primary number
-    ldi r19, 0
-    ldi r18, 2
-    ldi r17, 0
-    ldi r16, 0
-    ori r24, 0b00000000
-
-    ; Load secondary number
-    ldi r23, 0
-    ldi r22, 1
-    ldi r21, 0
-    ldi r20, 0
-    ori r24, 0b00000000
-    
-    
-    ; sign debug
-    mov r29,r24
-    call send_full_byte_binary
-    clr r29
-    ldi r30, '-'
-    call send_char_call_no_Correction
-    clr r30
-
+    ; Do Math
     call sign_inverter
     call add_int_numbers
 
-; --- INSTRUÇÃO 15 ---
+    ; Push to STACK (Save MEM)
+    ; salva o sinal e o número
+    push r24
+    push r16
+    push r17
+    push r18
+    push r19
 
-    ; Load primary number
-    ldi r19, 0
-    ldi r18, 1
-    ldi r17, 0
-    ldi r16, 0
-    ori r24, 0b00000000
-
-    ; Load secondary number
-    ldi r23, 0
-    ldi r22, 1
-    ldi r21, 0
-    ldi r20, 0
-    ori r24, 0b00000000
-
-    ; sign debug
-    mov r29,r24
-    call send_full_byte_binary
-    clr r29
-    ldi r30, '-'
-    call send_char_call_no_Correction
-    clr r30
-
-    call div_real_int_numbers
-
-
-    ; sign debug
-    mov r29,r24
-    call send_full_byte_binary
-    clr r29
-    ldi r30, '-'
-    call send_char_call_no_Correction
-    clr r30
-
+    ; print serial
     call send_sign_primary
     call send_full_byte_decimal_primary
     ldi r30, '|'
     call send_char_call_no_Correction
 
-    ; enter e delay (basicamente pra não poluir serial) PRECISA POR !!!!!!
+    ; ---------------------------------------------
+    clr r24
+
+     ; (2 MEM +) == (2 -2 +) = 0
+    ; Load primary number
+    ldi r19, 0
+    ldi r18, 2
+    ldi r17, 0
+    ldi r16, 0
+    ori r24, 0b00000000
+
+    ; Load secondary number MEM
+    ; Ele tira da pilha na ordem que foi guardado, lembrando que é uma pilha então é FILO
+    ; tira o valor do sinal da pilha e dps o valor, como é o segundo, usa mem_to_secondary para arrumar sinal
+    pop r23
+    pop r22
+    pop r21
+    pop r20
+    pop r25
+    push r25
+    push r20
+    push r21
+    push r22
+    push r23
+    call mem_to_secondary
+
+    ; Do Add
+    call add_int_numbers
+
+    ; print serial
+    call send_sign_primary
+    call send_full_byte_decimal_primary
+    ldi r30, '|'
+    call send_char_call_no_Correction
+
+    ;----------------------------------------------
+    clr r24
+
+     ; (MEM -2 +) == (-2 -2 +) = -4
+    ; Load primary number
+    pop r23
+    pop r22
+    pop r21
+    pop r20
+    pop r25
+    push r25
+    push r20
+    push r21
+    push r22
+    push r23
+    call mem_to_primary
+
+    ; Load secondary number
+    ldi r19, 0
+    ldi r18, 2
+    ldi r17, 0
+    ldi r16, 0
+    ori r24, 0b00000010
+
+    ; Do Add
+    call add_int_numbers
+
+    ; print serial
+    call send_sign_primary
+    call send_full_byte_decimal_primary
+    ldi r30, '|'
+    call send_char_call_no_Correction
+    
+    ;----------------------------------------------
+    
     ldi r30, 13
     call send_char_call_no_Correction
     call delay
