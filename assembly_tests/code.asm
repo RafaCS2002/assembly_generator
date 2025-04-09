@@ -5,8 +5,8 @@
 .equ UBRR_VAL = (F_CPU / (16 * BAUD)) - 1  ; Valor para UBRR (baud rate register)
 ;.equ STACK_POINTER = 0x0200
 .equ INT_EXAMPLE01 = 3  ; 1234 == 0x04D2                                                    ; DEBUG
-.equ INT_EXAMPLE02 = 3                                                                      ; DEBUG
-.equ RAT_EXAMPLE01 = 00                                                                     ; DEBUG
+.equ INT_EXAMPLE02 = 5                                                                      ; DEBUG
+.equ RAT_EXAMPLE01 = 6000                                                                     ; DEBUG
 .equ RAT_EXAMPLE02 = 00                                                                     ; DEBUG
 .equ SIGN_EXAMPLE = 0b00000000 ; bit 0 = primary sign | bit 1 = secondary sign              ; DEBUG
 .equ EXAMPLE_HEX = 0xF2A4                                                                   ; DEBUG
@@ -1196,11 +1196,17 @@ set_sign_for_zero:
     not_zero:
     ret
 sign_inverter:
+    ; salva primary
+    ldi r25, 1
+    and r25, r24
+    ; inverte
     ori r24, 0b00000100
-    ror r24
+    lsr r24
     subi r24, 1
-    rol r24
-    andi r24, 0b00000011
+    lsl r24
+    ; separa o unico bit e junta com o anterior
+    andi r24, 0b00000010
+    or r24, r25
     ret
 mem_to_primary:
     or r24, r25
@@ -2087,66 +2093,28 @@ setup:
 main:
     ; -----------------------------------------------
     clr r24
-    ; ((2 4 -) MEM) = -2
+    ; ((1 1 |) (2 2 +) *)
     ; Load primary number
-    ldi r19, 0
-    ldi r18, 2
-    ldi r17, 0
-    ldi r16, 0
-    ori r24, 0b00000000
+    ldi r19, high(INT_EXAMPLE01)
+    ldi r18, low(INT_EXAMPLE01)
+    ldi r17, high(RAT_EXAMPLE01)
+    ldi r16, low(RAT_EXAMPLE01)
 
     ; Load secondary number
-    ldi r23, 0
-    ldi r22, 4
-    ldi r21, 0
-    ldi r20, 0
-    ori r24, 0b00000000
+    ldi r23, high(INT_EXAMPLE02)
+    ldi r22, low(INT_EXAMPLE02)
+    ldi r21, high(RAT_EXAMPLE02)
+    ldi r20, low(RAT_EXAMPLE02)
+    ldi r24, SIGN_EXAMPLE
 
     ; Do Math
+    mov r29, r24
+    call send_full_byte_binary
+    ldi r30, '-'
+    call send_char_call_no_Correction
     call sign_inverter
-    call add_int_numbers
-
-    ; Push to STACK (Save MEM)
-    ; salva o sinal e o número
-    push r24
-    push r16
-    push r17
-    push r18
-    push r19
-
-    ; print serial
-    call send_sign_primary
-    call send_full_byte_decimal_primary
-    ldi r30, '|'
-    call send_char_call_no_Correction
-
-    ; ---------------------------------------------
-    clr r24
-
-     ; (2 MEM +) == (2 -2 +) = 0
-    ; Load primary number
-    ldi r19, 0
-    ldi r18, 2
-    ldi r17, 0
-    ldi r16, 0
-    ori r24, 0b00000000
-
-    ; Load secondary number MEM
-    ; Ele tira da pilha na ordem que foi guardado, lembrando que é uma pilha então é FILO
-    ; tira o valor do sinal da pilha e dps o valor, como é o segundo, usa mem_to_secondary para arrumar sinal
-    pop r23
-    pop r22
-    pop r21
-    pop r20
-    pop r25
-    push r25
-    push r20
-    push r21
-    push r22
-    push r23
-    call mem_to_secondary
-
-    ; Do Add
+    mov r29, r24
+    call send_full_byte_binary
     call add_int_numbers
 
     ; print serial
@@ -2155,38 +2123,6 @@ main:
     ldi r30, '|'
     call send_char_call_no_Correction
 
-    ;----------------------------------------------
-    clr r24
-
-     ; (MEM -2 +) == (-2 -2 +) = -4
-    ; Load primary number
-    pop r23
-    pop r22
-    pop r21
-    pop r20
-    pop r25
-    push r25
-    push r20
-    push r21
-    push r22
-    push r23
-    call mem_to_primary
-
-    ; Load secondary number
-    ldi r19, 0
-    ldi r18, 2
-    ldi r17, 0
-    ldi r16, 0
-    ori r24, 0b00000010
-
-    ; Do Add
-    call add_int_numbers
-
-    ; print serial
-    call send_sign_primary
-    call send_full_byte_decimal_primary
-    ldi r30, '|'
-    call send_char_call_no_Correction
     
     ;----------------------------------------------
     

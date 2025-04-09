@@ -940,11 +940,26 @@ set_sign_for_zero:
     not_zero:
     ret
 sign_inverter:
+    ; salva primary
+    ldi r25, 1
+    and r25, r24
+    ; inverte
     ori r24, 0b00000100
-    ror r24
+    lsr r24
     subi r24, 1
-    rol r24
-    andi r24, 0b00000011 
+    lsl r24
+    ; separa o unico bit e junta com o anterior
+    andi r24, 0b00000010
+    or r24, r25
+    ret
+
+mem_to_primary:
+    or r24, r25
+    ret
+
+mem_to_secondary:
+    lsl r25
+    or r24, r25
     ret
 ; OPERATIONS -----------------------------------------------------------------------------
 add_numbers:
@@ -1577,9 +1592,12 @@ add_int_numbers:
     pop r22
     pop r21
     pop r20
+
     call sub_numbers
 
+    pop r24
     call set_sign_for_zero
+
     ret
     
     eq_signs_add_int:
@@ -2159,7 +2177,7 @@ setup:
     ldi r16, low(RAMEND)
     sts SPL, r16
     call config_usart
-
+    
     clr r17
     clr r18
     clr r19
@@ -2171,172 +2189,857 @@ setup:
 
     ldi r30, 13
     call send_char_call_no_Correction
-
+    
     rjmp main
 
 main:
 
-; --- INSTRUÇÃO 0 ---
-
     ; Load primary number
-    ldi r19, 0
-    ldi r18, 3
-    ldi r17, 0
-    ldi r16, 0
-    ori r24, 0b00000000
+    ldi r19, high(2)
+    ldi r18, low(2)
+    ldi r17, high(0)
+    ldi r16, low(0)
+    ldi r24, 0b00000000
 
-    ; Load secondary number
-    ldi r23, 0
-    ldi r22, 2
-    ldi r21, 0
-    ldi r20, 0
-    ori r24, 0b00000000
-call mul_int_numbers
-
-; --- INSTRUÇÃO 1 ---
-
+    push r24
+    push r16
+    push r17
+    push r18
+    push r19
+        
     ; Load primary number
-    ldi r19, 0
-    ldi r18, 6
-    ldi r17, 0
-    ldi r16, 0
-    ori r24, 0b00000000
+    ldi r19, high(2)
+    ldi r18, low(2)
+    ldi r17, high(0)
+    ldi r16, low(0)
+    ldi r24, 0b00000000
 
-    ; Load secondary number
-    ldi r23, 0
-    ldi r22, 2
-    ldi r21, 0
-    ldi r20, 0
-    ori r24, 0b00000000
-call add_int_numbers
+    push r24
+    push r16
+    push r17
+    push r18
+    push r19
+        
+    clr r24
 
-; --- INSTRUÇÃO 2 ---
+    pop r23
+    pop r22
+    pop r21
+    pop r20
+    pop r25
+    call mem_to_secondary
 
-    ; Load primary number
-    ldi r19, 0
-    ldi r18, 8
-    ldi r17, 0
-    ldi r16, 0
-    ori r24, 0b00000000
+    pop r19
+    pop r18
+    pop r17
+    pop r16
+    pop r25
+    call mem_to_primary
+    call add_int_numbers
 
-    ; Load secondary number
-    ldi r23, 0
-    ldi r22, 2
-    ldi r21, 0
-    ldi r20, 0
-    ori r24, 0b00000000
-call add_int_numbers
+    push r24
+    push r16
+    push r17
+    push r18
+    push r19
+        
+    pop r19
+    pop r18
+    pop r17
+    pop r16
+    pop r25
+    call mem_to_primary
 
-; --- INSTRUÇÃO 3 ---
-
-    ; Load primary number
-    ldi r19, 0
-    ldi r18, 10
-    ldi r17, 0
-    ldi r16, 0
-    ori r24, 0b00000000
-
-    ; Load secondary number
-    ldi r23, 0
-    ldi r22, 2
-    ldi r21, 0
-    ldi r20, 0
-    ori r24, 0b00000000
-call add_int_numbers
-
-; --- INSTRUÇÃO 4 ---
-
-    ; Load primary number
-    ldi r19, 0
-    ldi r18, 12
-    ldi r17, 0
-    ldi r16, 0
-    ori r24, 0b00000000
-
-    ; Load secondary number
-    ldi r23, 0
-    ldi r22, 2
-    ldi r21, 0
-    ldi r20, 0
-    ori r24, 0b00000000
-call add_int_numbers
-
-; --- INSTRUÇÃO 5 ---
-
-    ; Load primary number
-    ldi r19, 0
-    ldi r18, 8
-    ldi r17, 0
-    ldi r16, 0
-    ori r24, 0b00000000
-
-    ; Load secondary number
-    ldi r23, 0
-    ldi r22, 7
-    ldi r21, 0
-    ldi r20, 0
-    ori r24, 0b00000000
-call mul_int_numbers
-
-; --- INSTRUÇÃO 6 ---
-
-    ; Load primary number
-    ldi r19, 0
-    ldi r18, 14
-    ldi r17, 0
-    ldi r16, 0
-    ori r24, 0b00000000
-
-    ; Load secondary number
-    ldi r23, 0
-    ldi r22, 56
-    ldi r21, 0
-    ldi r20, 0
-    ori r24, 0b00000000
-call add_int_numbers
-
-; --- INSTRUÇÃO 7 ---
-
-    ; Load primary number
-    ldi r19, 0
-    ldi r18, 70
-    ldi r17, 0
-    ldi r16, 0
-    ori r24, 0b00000000
-
-    ; Load secondary number
-    ldi r23, 0
-    ldi r22, 2
-    ldi r21, 0
-    ldi r20, 0
-    ori r24, 0b00000000
-call add_int_numbers
-
-; --- INSTRUÇÃO 8 ---
-
-    ; Load primary number
-    ldi r19, 0
-    ldi r18, 72
-    ldi r17, 0
-    ldi r16, 0
-    ori r24, 0b00000000
-
-    ; Load secondary number
-    ldi r23, 0
-    ldi r22, 2
-    ldi r21, 0
-    ldi r20, 0
-    ori r24, 0b00000000
-call add_int_numbers
-call send_sign_primary
-call send_full_byte_decimal_primary
-ldi r30, '|'
-call send_char_call_no_Correction
-
+    call send_sign_primary
+    call send_full_byte_decimal_primary
+    ldi r30, '|'
+    call send_char_call_no_Correction
+    clr r24
+        
 ; --------------------------
-   clr r24
 
-        ldi r30, 13
-        call send_char_call_no_Correction
-        call delay
-        rjmp main
+    ; Load primary number
+    ldi r19, high(2)
+    ldi r18, low(2)
+    ldi r17, high(0)
+    ldi r16, low(0)
+    ldi r24, 0b00000000
+
+    push r24
+    push r16
+    push r17
+    push r18
+    push r19
+        
+    ; Load primary number
+    ldi r19, high(2)
+    ldi r18, low(2)
+    ldi r17, high(0)
+    ldi r16, low(0)
+    ldi r24, 0b00000000
+
+    push r24
+    push r16
+    push r17
+    push r18
+    push r19
+        
+    clr r24
+
+    pop r23
+    pop r22
+    pop r21
+    pop r20
+    pop r25
+    call mem_to_secondary
+
+    pop r19
+    pop r18
+    pop r17
+    pop r16
+    pop r25
+    call mem_to_primary
+    call add_int_numbers
+
+    push r24
+    push r16
+    push r17
+    push r18
+    push r19
+        
+    ; Load primary number
+    ldi r19, high(2)
+    ldi r18, low(2)
+    ldi r17, high(0)
+    ldi r16, low(0)
+    ldi r24, 0b00000000
+
+    push r24
+    push r16
+    push r17
+    push r18
+    push r19
+        
+    clr r24
+
+    pop r23
+    pop r22
+    pop r21
+    pop r20
+    pop r25
+    call mem_to_secondary
+
+    pop r19
+    pop r18
+    pop r17
+    pop r16
+    pop r25
+    call mem_to_primary
+    call add_int_numbers
+
+    push r24
+    push r16
+    push r17
+    push r18
+    push r19
+        
+    pop r19
+    pop r18
+    pop r17
+    pop r16
+    pop r25
+    call mem_to_primary
+
+    call send_sign_primary
+    call send_full_byte_decimal_primary
+    ldi r30, '|'
+    call send_char_call_no_Correction
+    clr r24
+        
+; --------------------------
+
+    ; Load primary number
+    ldi r19, high(12)
+    ldi r18, low(12)
+    ldi r17, high(0)
+    ldi r16, low(0)
+    ldi r24, 0b00000000
+
+    push r24
+    push r16
+    push r17
+    push r18
+    push r19
+        
+    ; Load primary number
+    ldi r19, high(2)
+    ldi r18, low(2)
+    ldi r17, high(0)
+    ldi r16, low(0)
+    ldi r24, 0b00000000
+
+    push r24
+    push r16
+    push r17
+    push r18
+    push r19
+        
+    ; Load primary number
+    ldi r19, high(2)
+    ldi r18, low(2)
+    ldi r17, high(0)
+    ldi r16, low(0)
+    ldi r24, 0b00000000
+
+    push r24
+    push r16
+    push r17
+    push r18
+    push r19
+        
+    clr r24
+
+    pop r23
+    pop r22
+    pop r21
+    pop r20
+    pop r25
+    call mem_to_secondary
+
+    pop r19
+    pop r18
+    pop r17
+    pop r16
+    pop r25
+    call mem_to_primary
+    call add_int_numbers
+
+    push r24
+    push r16
+    push r17
+    push r18
+    push r19
+        
+    ; Load primary number
+    ldi r19, high(2)
+    ldi r18, low(2)
+    ldi r17, high(0)
+    ldi r16, low(0)
+    ldi r24, 0b00000000
+
+    push r24
+    push r16
+    push r17
+    push r18
+    push r19
+        
+    clr r24
+
+    pop r23
+    pop r22
+    pop r21
+    pop r20
+    pop r25
+    call mem_to_secondary
+
+    pop r19
+    pop r18
+    pop r17
+    pop r16
+    pop r25
+    call mem_to_primary
+    call add_int_numbers
+
+    push r24
+    push r16
+    push r17
+    push r18
+    push r19
+        
+    clr r24
+
+    pop r23
+    pop r22
+    pop r21
+    pop r20
+    pop r25
+    call mem_to_secondary
+
+    pop r19
+    pop r18
+    pop r17
+    pop r16
+    pop r25
+    call mem_to_primary
+    call div_int_int_numbers
+
+    push r24
+    push r16
+    push r17
+    push r18
+    push r19
+        
+    pop r19
+    pop r18
+    pop r17
+    pop r16
+    pop r25
+    call mem_to_primary
+
+    call send_sign_primary
+    call send_full_byte_decimal_primary
+    ldi r30, '|'
+    call send_char_call_no_Correction
+    clr r24
+        
+; --------------------------
+
+    ; Load primary number
+    ldi r19, high(2)
+    ldi r18, low(2)
+    ldi r17, high(0)
+    ldi r16, low(0)
+    ldi r24, 0b00000000
+
+    push r24
+    push r16
+    push r17
+    push r18
+    push r19
+        
+    ; Load primary number
+    ldi r19, high(2)
+    ldi r18, low(2)
+    ldi r17, high(0)
+    ldi r16, low(0)
+    ldi r24, 0b00000000
+
+    push r24
+    push r16
+    push r17
+    push r18
+    push r19
+        
+    clr r24
+
+    pop r23
+    pop r22
+    pop r21
+    pop r20
+    pop r25
+    call mem_to_secondary
+
+    pop r19
+    pop r18
+    pop r17
+    pop r16
+    pop r25
+    call mem_to_primary
+    call add_int_numbers
+
+    push r24
+    push r16
+    push r17
+    push r18
+    push r19
+        
+    pop r19
+    pop r18
+    pop r17
+    pop r16
+    pop r25
+    call mem_to_primary
+
+    call send_sign_primary
+    call send_full_byte_decimal_primary
+    ldi r30, '|'
+    call send_char_call_no_Correction
+    clr r24
+        
+; --------------------------
+
+    ; Load primary number
+    ldi r19, high(2)
+    ldi r18, low(2)
+    ldi r17, high(0)
+    ldi r16, low(0)
+    ldi r24, 0b00000000
+
+    push r24
+    push r16
+    push r17
+    push r18
+    push r19
+        
+    ; Load primary number
+    ldi r19, high(2)
+    ldi r18, low(2)
+    ldi r17, high(0)
+    ldi r16, low(0)
+    ldi r24, 0b00000000
+
+    push r24
+    push r16
+    push r17
+    push r18
+    push r19
+        
+    clr r24
+
+    pop r23
+    pop r22
+    pop r21
+    pop r20
+    pop r25
+    call mem_to_secondary
+
+    pop r19
+    pop r18
+    pop r17
+    pop r16
+    pop r25
+    call mem_to_primary
+    call add_int_numbers
+
+    push r24
+    push r16
+    push r17
+    push r18
+    push r19
+        
+    ; Load primary number
+    ldi r19, high(2)
+    ldi r18, low(2)
+    ldi r17, high(0)
+    ldi r16, low(0)
+    ldi r24, 0b00000000
+
+    push r24
+    push r16
+    push r17
+    push r18
+    push r19
+        
+    ; Load primary number
+    ldi r19, high(2)
+    ldi r18, low(2)
+    ldi r17, high(0)
+    ldi r16, low(0)
+    ldi r24, 0b00000000
+
+    push r24
+    push r16
+    push r17
+    push r18
+    push r19
+        
+    clr r24
+
+    pop r23
+    pop r22
+    pop r21
+    pop r20
+    pop r25
+    call mem_to_secondary
+
+    pop r19
+    pop r18
+    pop r17
+    pop r16
+    pop r25
+    call mem_to_primary
+    call add_int_numbers
+
+    push r24
+    push r16
+    push r17
+    push r18
+    push r19
+        
+    clr r24
+
+    pop r23
+    pop r22
+    pop r21
+    pop r20
+    pop r25
+    call mem_to_secondary
+
+    pop r19
+    pop r18
+    pop r17
+    pop r16
+    pop r25
+    call mem_to_primary
+    call add_int_numbers
+
+    push r24
+    push r16
+    push r17
+    push r18
+    push r19
+        
+    pop r19
+    pop r18
+    pop r17
+    pop r16
+    pop r25
+    call mem_to_primary
+
+    call send_sign_primary
+    call send_full_byte_decimal_primary
+    ldi r30, '|'
+    call send_char_call_no_Correction
+    clr r24
+        
+; --------------------------
+
+    ; Load primary number
+    ldi r19, high(2)
+    ldi r18, low(2)
+    ldi r17, high(0)
+    ldi r16, low(0)
+    ldi r24, 0b00000000
+
+    push r24
+    push r16
+    push r17
+    push r18
+    push r19
+        
+    ; Load primary number
+    ldi r19, high(2)
+    ldi r18, low(2)
+    ldi r17, high(0)
+    ldi r16, low(0)
+    ldi r24, 0b00000000
+
+    push r24
+    push r16
+    push r17
+    push r18
+    push r19
+        
+    clr r24
+
+    pop r23
+    pop r22
+    pop r21
+    pop r20
+    pop r25
+    call mem_to_secondary
+
+    pop r19
+    pop r18
+    pop r17
+    pop r16
+    pop r25
+    call mem_to_primary
+    call add_int_numbers
+
+    push r24
+    push r16
+    push r17
+    push r18
+    push r19
+        
+    ; Load primary number
+    ldi r19, high(2)
+    ldi r18, low(2)
+    ldi r17, high(0)
+    ldi r16, low(0)
+    ldi r24, 0b00000000
+
+    push r24
+    push r16
+    push r17
+    push r18
+    push r19
+        
+    clr r24
+
+    pop r23
+    pop r22
+    pop r21
+    pop r20
+    pop r25
+    call mem_to_secondary
+
+    pop r19
+    pop r18
+    pop r17
+    pop r16
+    pop r25
+    call mem_to_primary
+    call add_int_numbers
+
+    push r24
+    push r16
+    push r17
+    push r18
+    push r19
+        
+    pop r19
+    pop r18
+    pop r17
+    pop r16
+    pop r25
+    call mem_to_primary
+
+    call send_sign_primary
+    call send_full_byte_decimal_primary
+    ldi r30, '|'
+    call send_char_call_no_Correction
+    clr r24
+        
+; --------------------------
+
+    ; Load primary number
+    ldi r19, high(2)
+    ldi r18, low(2)
+    ldi r17, high(0)
+    ldi r16, low(0)
+    ldi r24, 0b00000000
+
+    push r24
+    push r16
+    push r17
+    push r18
+    push r19
+        
+    ; Load primary number
+    ldi r19, high(2)
+    ldi r18, low(2)
+    ldi r17, high(0)
+    ldi r16, low(0)
+    ldi r24, 0b00000000
+
+    push r24
+    push r16
+    push r17
+    push r18
+    push r19
+        
+    clr r24
+
+    pop r23
+    pop r22
+    pop r21
+    pop r20
+    pop r25
+    call mem_to_secondary
+
+    pop r19
+    pop r18
+    pop r17
+    pop r16
+    pop r25
+    call mem_to_primary
+    call add_int_numbers
+
+    push r24
+    push r16
+    push r17
+    push r18
+    push r19
+        
+    ; Load primary number
+    ldi r19, high(2)
+    ldi r18, low(2)
+    ldi r17, high(0)
+    ldi r16, low(0)
+    ldi r24, 0b00000000
+
+    push r24
+    push r16
+    push r17
+    push r18
+    push r19
+        
+    clr r24
+
+    pop r23
+    pop r22
+    pop r21
+    pop r20
+    pop r25
+    call mem_to_secondary
+
+    pop r19
+    pop r18
+    pop r17
+    pop r16
+    pop r25
+    call mem_to_primary
+    call add_int_numbers
+
+    push r24
+    push r16
+    push r17
+    push r18
+    push r19
+        
+    ; Load primary number
+    ldi r19, high(12)
+    ldi r18, low(12)
+    ldi r17, high(0)
+    ldi r16, low(0)
+    ldi r24, 0b00000000
+
+    push r24
+    push r16
+    push r17
+    push r18
+    push r19
+        
+    ; Load primary number
+    ldi r19, high(2)
+    ldi r18, low(2)
+    ldi r17, high(0)
+    ldi r16, low(0)
+    ldi r24, 0b00000000
+
+    push r24
+    push r16
+    push r17
+    push r18
+    push r19
+        
+    ; Load primary number
+    ldi r19, high(2)
+    ldi r18, low(2)
+    ldi r17, high(0)
+    ldi r16, low(0)
+    ldi r24, 0b00000000
+
+    push r24
+    push r16
+    push r17
+    push r18
+    push r19
+        
+    clr r24
+
+    pop r23
+    pop r22
+    pop r21
+    pop r20
+    pop r25
+    call mem_to_secondary
+
+    pop r19
+    pop r18
+    pop r17
+    pop r16
+    pop r25
+    call mem_to_primary
+    call add_int_numbers
+
+    push r24
+    push r16
+    push r17
+    push r18
+    push r19
+        
+    ; Load primary number
+    ldi r19, high(2)
+    ldi r18, low(2)
+    ldi r17, high(0)
+    ldi r16, low(0)
+    ldi r24, 0b00000000
+
+    push r24
+    push r16
+    push r17
+    push r18
+    push r19
+        
+    clr r24
+
+    pop r23
+    pop r22
+    pop r21
+    pop r20
+    pop r25
+    call mem_to_secondary
+
+    pop r19
+    pop r18
+    pop r17
+    pop r16
+    pop r25
+    call mem_to_primary
+    call add_int_numbers
+
+    push r24
+    push r16
+    push r17
+    push r18
+    push r19
+        
+    clr r24
+
+    pop r23
+    pop r22
+    pop r21
+    pop r20
+    pop r25
+    call mem_to_secondary
+
+    pop r19
+    pop r18
+    pop r17
+    pop r16
+    pop r25
+    call mem_to_primary
+    call div_int_int_numbers
+
+    push r24
+    push r16
+    push r17
+    push r18
+    push r19
+        
+    clr r24
+
+    pop r23
+    pop r22
+    pop r21
+    pop r20
+    pop r25
+    call mem_to_secondary
+
+    pop r19
+    pop r18
+    pop r17
+    pop r16
+    pop r25
+    call mem_to_primary
+    call add_int_numbers
+
+    push r24
+    push r16
+    push r17
+    push r18
+    push r19
+        
+    pop r19
+    pop r18
+    pop r17
+    pop r16
+    pop r25
+    call mem_to_primary
+
+    call send_sign_primary
+    call send_full_byte_decimal_primary
+    ldi r30, '|'
+    call send_char_call_no_Correction
+    clr r24
+        
+; --------------------------
+
+    ldi r30, 13
+    call send_char_call_no_Correction
+    call delay
+    rjmp main
+    

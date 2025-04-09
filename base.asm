@@ -940,11 +940,26 @@ set_sign_for_zero:
     not_zero:
     ret
 sign_inverter:
+    ; salva primary
+    ldi r25, 1
+    and r25, r24
+    ; inverte
     ori r24, 0b00000100
-    ror r24
+    lsr r24
     subi r24, 1
-    rol r24
-    andi r24, 0b00000011 
+    lsl r24
+    ; separa o unico bit e junta com o anterior
+    andi r24, 0b00000010
+    or r24, r25
+    ret
+
+mem_to_primary:
+    or r24, r25
+    ret
+
+mem_to_secondary:
+    lsl r25
+    or r24, r25
     ret
 ; OPERATIONS -----------------------------------------------------------------------------
 add_numbers:
