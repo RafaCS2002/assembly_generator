@@ -2,7 +2,7 @@ import sys
 import re
 
 # VARIAVEIS GLOBAIS
-MEM = 0  # armazena posicao no historico
+MEM = None  # armazena posicao no historico
 RES = 0     # contador de expressoes processadas
 INSTR_ID = 0
 debug_output = []  # salva linha e resultado em float
@@ -56,6 +56,14 @@ def is_primary(tokens, index):
     except:
         return False
 
+def is_calculable_mem(tokens, index):
+    try: 
+        if tokens[index-1] in "+-*/|%^": return True
+        elif tokens[index-2] in "+-*/|%^": return True
+        else: return False
+    except:
+        return False
+    
 def push_assembly():
         asm="""
     push r24
@@ -95,7 +103,6 @@ def evaluate_rpn(tokens, linestack, lineExpr):
     global INSTR_ID, MEM, RES
     asm = ""
     for i in range(len(tokens)):
-        print(i)
         token = tokens[i]
 
         if isinstance(token, list) and token[1]=="RES":  # caso (N RES)
@@ -124,20 +131,35 @@ def evaluate_rpn(tokens, linestack, lineExpr):
             asm += load_number_block(primary_int, primary_frac, primary_sign, 'primary')
             asm += push_assembly()
 
-        elif i == 1 and token == "MEM":  # caso (V MEM)
-            print("MEM")
-            MEM = RES
-            return asm, linestack,linestack.pop(-1)
+        elif token == "MEM":
+            if is_calculable_mem(tokens, i): #recupera valor
+                if MEM != None:
+                    linestack.append(lineExpr[MEM][1])
 
-        elif token == "MEM":  # recupera valor salvo
-            linestack.append(lineExpr[MEM][1])
+                    # ASSEMBLY
+                    asm += lineExpr[MEM][0]
+                else:                           # caso (V MEM)
+                    linestack.append(0)
 
-            # ASSEMBLY
-            asm += lineExpr[MEM][0]
+                    # ASSEMBLY
+                    primary_int, primary_frac, primary_sign = parse_num('0')
+                
+                    asm += load_number_block(primary_int, primary_frac, primary_sign, 'primary')
+                    asm += push_assembly()
+            
+            else:
+                MEM = RES
+                return asm, linestack, float(linestack.pop(-1))
 
         elif token in "+-*/|%^": # caso operação
             secondary = float(linestack.pop(-1))
             primary = float(linestack.pop(-1))
+
+            if (token == '|' or token == '/') and secondary == 0.0:
+                return None
+            
+            if (token == '^' and secondary < 0) or token == '^' and not (isinstance(secondary, float) and secondary.is_integer()):
+                return None
 
             try:
                 if token != '|':
@@ -232,13 +254,13 @@ main:
         linestack = []
         try:
             tokens = tokenize_rpn_nested(linha.strip())
-            print(RES, tokens)
             asm, linestack, result = evaluate_rpn(tokens,linestack,lineExpr)
             lineExpr.append([asm,result])
             asm += pop_assembly('primary')
         except Exception as e:
             asm = f"; Erro ao processar linha: {linha.strip()} - {str(e)}\n"
             result = "Erro"
+            lineExpr.append([None,result])
 
         debug_output.append((linha.strip(), result))
         body += asm

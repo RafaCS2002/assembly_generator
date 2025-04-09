@@ -4,9 +4,9 @@
 .equ BAUD = 9600         ; Taxa de baud
 .equ UBRR_VAL = (F_CPU / (16 * BAUD)) - 1  ; Valor para UBRR (baud rate register)
 ;.equ STACK_POINTER = 0x0200
-.equ INT_EXAMPLE01 = 3  ; 1234 == 0x04D2                                                    ; DEBUG
-.equ INT_EXAMPLE02 = 5                                                                      ; DEBUG
-.equ RAT_EXAMPLE01 = 6000                                                                     ; DEBUG
+.equ INT_EXAMPLE01 = 2 ; 1234 == 0x04D2                                                    ; DEBUG
+.equ INT_EXAMPLE02 = 3                                                                      ; DEBUG
+.equ RAT_EXAMPLE01 = 00                                                                     ; DEBUG
 .equ RAT_EXAMPLE02 = 00                                                                     ; DEBUG
 .equ SIGN_EXAMPLE = 0b00000000 ; bit 0 = primary sign | bit 1 = secondary sign              ; DEBUG
 .equ EXAMPLE_HEX = 0xF2A4                                                                   ; DEBUG
@@ -1959,6 +1959,28 @@ div_real_int_numbers:
     ret
 
 power_int_numbers:
+    ldi r31, 0
+    cp  r20, r31
+    cpc r21, r31
+    cpc r22, r31
+    cpc r23, r31
+    breq if_exp_zero
+    rjmp keep_normal_power
+    if_exp_zero:
+
+    ldi r19, 0
+    ldi r18, 1
+    ldi r17, 0
+    ldi r16, 0
+    
+    clr r20
+    clr r21
+    clr r22
+    clr r23
+    clr r24
+    rjmp end_power_int_numbers
+
+    keep_normal_power:
     sbrc r24, 0
     rjmp minus_number_power
     plus_number_power:
@@ -2038,6 +2060,8 @@ power_int_numbers:
     pop r24
 
     call set_sign_for_zero
+
+    end_power_int_numbers:
     ret
 ; FUNCTIONS ------------------------------------------------------------------------
 send_full_number_hex_primary: ; DEBUG
@@ -2108,14 +2132,8 @@ main:
     ldi r24, SIGN_EXAMPLE
 
     ; Do Math
-    mov r29, r24
-    call send_full_byte_binary
-    ldi r30, '-'
-    call send_char_call_no_Correction
-    call sign_inverter
-    mov r29, r24
-    call send_full_byte_binary
-    call add_int_numbers
+    
+    call power_int_numbers
 
     ; print serial
     call send_sign_primary

@@ -1704,6 +1704,28 @@ div_real_int_numbers:
     ret
 
 power_int_numbers:
+    ldi r31, 0
+    cp  r20, r31
+    cpc r21, r31
+    cpc r22, r31
+    cpc r23, r31
+    breq if_exp_zero
+    rjmp keep_normal_power
+    if_exp_zero:
+
+    ldi r19, 0
+    ldi r18, 1
+    ldi r17, 0
+    ldi r16, 0
+    
+    clr r20
+    clr r21
+    clr r22
+    clr r23
+    clr r24
+    rjmp end_power_int_numbers
+
+    keep_normal_power:
     sbrc r24, 0
     rjmp minus_number_power
     plus_number_power:
@@ -1783,6 +1805,8 @@ power_int_numbers:
     pop r24
 
     call set_sign_for_zero
+
+    end_power_int_numbers:
     ret
 
 
