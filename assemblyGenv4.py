@@ -1,3 +1,6 @@
+# Rafael de Camargo Sampaio
+# Carolina Braun Prado
+# GRUPO 1
 import sys
 import re
 
@@ -280,7 +283,8 @@ main:
     ldi r30, 13
     call send_char_call_no_Correction
     call delay
-    rjmp main
+    end_of_code_really:
+    rjmp end_of_code_really
     """
     return codigo_base + "\n" + setup + body + final
 
